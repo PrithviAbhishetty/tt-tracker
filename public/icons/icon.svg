@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#16a34a"/>
+  <g transform="translate(256 256)">
+    <circle r="120" fill="#ffffff" opacity="0.95"/>
+    <circle r="120" fill="none" stroke="#0b5b29" stroke-width="6" opacity="0.5"/>
+    <text x="0" y="0" text-anchor="middle" dominant-baseline="central"
+          font-family="system-ui, -apple-system, Segoe UI, sans-serif"
+          font-size="170" font-weight="700" fill="#0b5b29">TT</text>
+  </g>
+</svg>
