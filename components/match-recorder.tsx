@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { PlayerPicker } from "./player-picker";
 import { recordMatch } from "@/lib/offline/sync";
+import { fetchPlayers } from "@/lib/offline/players-cache";
+import type { PlayerRow } from "@/lib/types";
 
 interface Props {
   matchType: "singles" | "doubles";
@@ -19,6 +21,24 @@ export function MatchRecorder({ matchType }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [players, setPlayers] = useState<PlayerRow[]>([]);
+  const [manualUnrated, setManualUnrated] = useState(false);
+
+  useEffect(() => {
+    void fetchPlayers().then(setPlayers);
+  }, []);
+
+  const playerById = useMemo(
+    () => new Map(players.map((p) => [p.id, p])),
+    [players],
+  );
+
+  const selectedIds = [...side1, ...side2];
+  const hasGuest = selectedIds.some((id) => {
+    const p = playerById.get(id);
+    return !!p && !p.user_id;
+  });
+  const willBeRated = !hasGuest && !manualUnrated && selectedIds.length === perSide * 2;
 
   const ready = side1.length === perSide && side2.length === perSide && winner !== null;
 
@@ -35,6 +55,7 @@ export function MatchRecorder({ matchType }: Props) {
         played_at: new Date().toISOString(),
         side1_player_ids: side1,
         side2_player_ids: side2,
+        rated: hasGuest ? false : !manualUnrated,
       });
       if (result === "synced") {
         setInfo("Recorded.");
@@ -112,6 +133,27 @@ export function MatchRecorder({ matchType }: Props) {
           })}
         </div>
       </div>
+
+      {ready && (
+        <div className="space-y-2">
+          {hasGuest ? (
+            <div className="border-l-2 border-paper-edge bg-paper-edge/10 px-3 py-2 text-xs text-ink">
+              Includes a guest — match recorded for history but{" "}
+              <span className="font-medium">won&apos;t affect ELO</span>.
+            </div>
+          ) : (
+            <label className="flex items-center gap-2 text-xs text-ink-on-paper/80 select-none">
+              <input
+                type="checkbox"
+                checked={!manualUnrated}
+                onChange={(e) => setManualUnrated(!e.target.checked)}
+                className="accent-accent"
+              />
+              Count toward ELO {willBeRated ? "" : "· will be unrated"}
+            </label>
+          )}
+        </div>
+      )}
 
       <button
         type="button"

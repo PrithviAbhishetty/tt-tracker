@@ -45,6 +45,7 @@ export interface GroupMatchSummary {
   match_type: "singles" | "doubles";
   winning_side: 1 | 2;
   played_at: string;
+  rated: boolean;
   side1: string[];
   side2: string[];
 }
@@ -60,7 +61,9 @@ export async function fetchGroupMatches(
   const supabase = await createClient();
   const { data: candidates } = await supabase
     .from("match_players")
-    .select("match_id, player_id, side, matches!inner(id, match_type, winning_side, played_at)")
+    .select(
+      "match_id, player_id, side, matches!inner(id, match_type, winning_side, played_at, rated)",
+    )
     .in("player_id", memberIds)
     .order("match_id");
 
@@ -69,7 +72,12 @@ export async function fetchGroupMatches(
   const byMatch = new Map<
     string,
     {
-      meta: { match_type: "singles" | "doubles"; winning_side: 1 | 2; played_at: string };
+      meta: {
+        match_type: "singles" | "doubles";
+        winning_side: 1 | 2;
+        played_at: string;
+        rated: boolean;
+      };
       side1: string[];
       side2: string[];
       seen: number;
@@ -81,9 +89,15 @@ export async function fetchGroupMatches(
       match_type: "singles" | "doubles";
       winning_side: 1 | 2;
       played_at: string;
+      rated: boolean;
     };
     const entry = byMatch.get(row.match_id) ?? {
-      meta: { match_type: m.match_type, winning_side: m.winning_side, played_at: m.played_at },
+      meta: {
+        match_type: m.match_type,
+        winning_side: m.winning_side,
+        played_at: m.played_at,
+        rated: m.rated,
+      },
       side1: [] as string[],
       side2: [] as string[],
       seen: 0,
@@ -103,6 +117,7 @@ export async function fetchGroupMatches(
       match_type: entry.meta.match_type,
       winning_side: entry.meta.winning_side,
       played_at: entry.meta.played_at,
+      rated: entry.meta.rated,
       side1: entry.side1,
       side2: entry.side2,
     });
@@ -120,6 +135,7 @@ export async function fetchGroupLeaderboard(groupId: string): Promise<PlayerRow[
     .from("players")
     .select("id, display_name, user_id, elo_rating, games_played, is_active")
     .in("id", memberIds)
+    .not("user_id", "is", null)
     .order("elo_rating", { ascending: false });
   return (data ?? []) as PlayerRow[];
 }

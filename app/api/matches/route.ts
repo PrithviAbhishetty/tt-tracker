@@ -15,6 +15,7 @@ function validate(body: unknown): MatchRecord | null {
   // Ensure no overlap
   const allIds = [...b.side1_player_ids, ...b.side2_player_ids];
   if (new Set(allIds).size !== allIds.length) return null;
+  if (b.rated != null && typeof b.rated !== "boolean") return null;
   return b as MatchRecord;
 }
 
@@ -41,6 +42,20 @@ export async function POST(request: NextRequest) {
 
   const service = createServiceClient();
 
+  // Determine whether this match is rated. A match is rated iff every
+  // participant has a linked auth user AND the caller did not opt out.
+  // Manual rated:true cannot promote a guest match — server is authoritative.
+  const allPlayerIds = [...match.side1_player_ids, ...match.side2_player_ids];
+  const { data: participantRows } = await service
+    .from("players")
+    .select("id, user_id")
+    .in("id", allPlayerIds);
+  const allRegistered =
+    !!participantRows &&
+    participantRows.length === allPlayerIds.length &&
+    participantRows.every((p) => p.user_id !== null);
+  const finalRated = allRegistered && match.rated !== false;
+
   // Insert match + match_players in a transaction-ish sequence. Use service role
   // to also write the auxiliary tables and trigger the ELO recompute.
   const { data: inserted, error: insertError } = await service
@@ -52,6 +67,7 @@ export async function POST(request: NextRequest) {
       recorded_by: user.id,
       tournament_match_id: match.tournament_match_id ?? null,
       client_uuid: match.client_uuid,
+      rated: finalRated,
     })
     .select("id")
     .single();

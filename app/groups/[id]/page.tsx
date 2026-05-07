@@ -161,6 +161,11 @@ export default async function GroupHomePage({
                     <span className="text-ink-soft mx-2">def.</span>
                     {loser}
                   </span>
+                  {!m.rated && (
+                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 border border-paper-edge/40 text-ink-soft">
+                      unrated
+                    </span>
+                  )}
                 </li>
               );
             })}

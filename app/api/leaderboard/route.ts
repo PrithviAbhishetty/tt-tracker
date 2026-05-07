@@ -13,9 +13,10 @@ export async function GET() {
       .from("players")
       .select("id, display_name, user_id, elo_rating, games_played, is_active")
       .eq("is_active", true)
+      .not("user_id", "is", null)
       .order("elo_rating", { ascending: false })
       .limit(100),
-    supabase.from("matches").select("*", { count: "exact", head: true }),
+    supabase.from("matches").select("*", { count: "exact", head: true }).eq("rated", true),
   ]);
 
   return NextResponse.json({

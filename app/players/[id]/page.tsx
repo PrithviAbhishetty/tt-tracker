@@ -43,7 +43,7 @@ export default async function PlayerProfilePage({
   // Match history for this player
   const { data: matchPlayerRows } = await supabase
     .from("match_players")
-    .select("match_id, side, matches!inner(id, match_type, winning_side, played_at)")
+    .select("match_id, side, matches!inner(id, match_type, winning_side, played_at, rated)")
     .eq("player_id", id);
 
   const matches = (matchPlayerRows ?? [])
@@ -95,8 +95,13 @@ export default async function PlayerProfilePage({
 
   const wins = matches.filter((m) => m.winning_side === m.side).length;
   const losses = matches.length - wins;
+  const ratedMatches = matches.filter((m) => m.rated);
+  const ratedWins = ratedMatches.filter((m) => m.winning_side === m.side).length;
+  const ratedLosses = ratedMatches.length - ratedWins;
 
-  const rankKanji = rank === 1 ? "覇" : rank === 2 ? "二" : rank === 3 ? "三" : null;
+  const isGuest = !player.user_id;
+  const rankKanji =
+    isGuest ? null : rank === 1 ? "覇" : rank === 2 ? "二" : rank === 3 ? "三" : null;
 
   return (
     <div className="space-y-7">
@@ -114,7 +119,7 @@ export default async function PlayerProfilePage({
           </div>
         )}
         <p className="slug-on-paper">
-          ［ player ］{rank ? ` rank №${String(rank).padStart(2, "0")}` : ""}
+          ［ player ］{!isGuest && rank ? ` rank №${String(rank).padStart(2, "0")}` : ""}
         </p>
         <div className="brush text-3xl sm:text-4xl text-ink mt-2 leading-tight truncate">
           {player.display_name}
@@ -129,22 +134,46 @@ export default async function PlayerProfilePage({
         )}
 
         <div className="grid grid-cols-3 gap-3 mt-6">
-          <Stat label="elo" value={player.elo_rating} />
-          <Stat label="games" value={player.games_played} />
-          <Stat
-            label="W / L"
-            customValue={
-              <span className="flex items-baseline gap-2">
-                <span className="display tnum">{wins}</span>
-                <span className="text-ink-soft text-base">/</span>
-                <span className="display tnum">{losses}</span>
-              </span>
-            }
-          />
+          {isGuest ? (
+            <>
+              <Stat label="games" value={matches.length} />
+              <Stat
+                label="W / L"
+                customValue={
+                  <span className="flex items-baseline gap-2">
+                    <span className="display tnum">{wins}</span>
+                    <span className="text-ink-soft text-base">/</span>
+                    <span className="display tnum">{losses}</span>
+                  </span>
+                }
+              />
+              <Stat
+                label="rating"
+                customValue={
+                  <span className="text-ink-soft text-2xl">—</span>
+                }
+              />
+            </>
+          ) : (
+            <>
+              <Stat label="elo" value={player.elo_rating} />
+              <Stat label="rated" value={ratedMatches.length} />
+              <Stat
+                label="W / L (rated)"
+                customValue={
+                  <span className="flex items-baseline gap-2">
+                    <span className="display tnum">{ratedWins}</span>
+                    <span className="text-ink-soft text-base">/</span>
+                    <span className="display tnum">{ratedLosses}</span>
+                  </span>
+                }
+              />
+            </>
+          )}
         </div>
       </div>
 
-      {chartData.length > 1 && (
+      {!isGuest && chartData.length > 1 && (
         <div className="paper paper-deckle px-4 py-4 tt-rise" style={{ animationDelay: "120ms" }}>
           <div className="slug-on-paper mb-2">［ elo history ］</div>
           <EloHistoryChart data={chartData} />
@@ -181,6 +210,11 @@ export default async function PlayerProfilePage({
                         {won ? "Win" : "Loss"}
                       </span>
                       <span className="text-ink-soft">{m.match_type}</span>
+                      {!m.rated && (
+                        <span className="px-1.5 py-0.5 border border-paper-edge/40 text-ink-soft tracking-wider">
+                          unrated
+                        </span>
+                      )}
                     </div>
                     <div className="truncate text-ink mt-1">
                       {teammates.length > 0 && (

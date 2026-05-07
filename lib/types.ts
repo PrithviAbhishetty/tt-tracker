@@ -30,4 +30,5 @@ export interface MatchRecord {
   side1_player_ids: string[];
   side2_player_ids: string[];
   tournament_match_id?: string;
+  rated?: boolean; // optional manual override; server is authoritative
 }
