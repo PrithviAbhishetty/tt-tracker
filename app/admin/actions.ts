@@ -24,16 +24,6 @@ async function assertNoRatedHistory(userId: string): Promise<void> {
   }
 }
 
-export async function wipeUserData(userId: string): Promise<{ ok: true }> {
-  await requireAdmin();
-  await assertNoRatedHistory(userId);
-  const service = createServiceClient();
-  const { error } = await service.rpc("admin_wipe_user_data", { p_user_id: userId });
-  if (error) throw new Error(error.message);
-  revalidatePath("/admin");
-  return { ok: true };
-}
-
 export async function wipeUserAndAuth(userId: string): Promise<{ ok: true }> {
   await requireAdmin();
   await assertNoRatedHistory(userId);

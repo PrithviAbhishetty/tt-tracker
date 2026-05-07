@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { factoryReset, wipeAllData, wipeUserAndAuth, wipeUserData } from "./actions";
+import { factoryReset, wipeAllData, wipeUserAndAuth } from "./actions";
 
 interface AdminUserRow {
   user_id: string | null;
@@ -41,28 +41,12 @@ function UserRow({ user }: { user: AdminUserRow }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const [dataConfirm, setDataConfirm] = useState("");
   const [authConfirm, setAuthConfirm] = useState("");
 
   const locked = user.rated_games > 0;
-  const dataReady = !locked && dataConfirm.trim().toLowerCase() === user.email.toLowerCase();
-  const authReady = !locked && authConfirm.trim() === `DELETE ${user.email}`;
+  const authReady = !locked && authConfirm.trim() === `KICK ${user.email}`;
 
-  function doWipeData() {
-    if (!dataReady || !user.user_id) return;
-    setError(null);
-    startTransition(async () => {
-      try {
-        await wipeUserData(user.user_id!);
-        setDataConfirm("");
-        router.refresh();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed");
-      }
-    });
-  }
-
-  function doWipeAuth() {
+  function doKick() {
     if (!authReady || !user.user_id) return;
     setError(null);
     startTransition(async () => {
@@ -101,58 +85,37 @@ function UserRow({ user }: { user: AdminUserRow }) {
 
       {open && (
         <div className="mt-3 space-y-3 border-t border-paper-edge/40 pt-3">
-          {locked && (
+          {locked ? (
             <p className="text-xs text-ink-soft border-l-2 border-paper-edge bg-paper-edge/10 px-3 py-2">
               Locked — this user has {user.rated_games} rated game
-              {user.rated_games === 1 ? "" : "s"}. Individual wipes would invalidate opponents&apos;
-              ELO history. Use <span className="mono">factory reset</span> or{" "}
-              <span className="mono">wipe entire app</span> instead.
+              {user.rated_games === 1 ? "" : "s"}. Once a user has played rated games they
+              can&apos;t be removed individually. Use <span className="mono">factory reset</span>{" "}
+              or <span className="mono">wipe entire app</span> instead.
             </p>
+          ) : (
+            <div className="space-y-1">
+              <p className="text-xs text-ink-soft">
+                Kick user (deletes their data and auth account) — type{" "}
+                <span className="mono text-ink">KICK {user.email}</span>
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={authConfirm}
+                  onChange={(e) => setAuthConfirm(e.target.value)}
+                  placeholder={`KICK ${user.email}`}
+                  className="flex-1 border border-paper-edge/60 bg-paper-light/60 px-2 py-1 text-xs text-ink outline-none focus:border-accent"
+                />
+                <button
+                  type="button"
+                  disabled={!authReady || pending || !user.user_id}
+                  onClick={doKick}
+                  className="tt-press bg-paper-edge text-paper-light px-3 py-1 text-xs hover:opacity-90 transition disabled:opacity-40"
+                >
+                  Kick
+                </button>
+              </div>
+            </div>
           )}
-          <div className="space-y-1">
-            <p className="text-xs text-ink-soft">
-              Wipe data — type <span className="mono text-ink">{user.email}</span>
-            </p>
-            <div className="flex gap-2">
-              <input
-                value={dataConfirm}
-                onChange={(e) => setDataConfirm(e.target.value)}
-                placeholder={user.email}
-                className="flex-1 border border-paper-edge/60 bg-paper-light/60 px-2 py-1 text-xs text-ink outline-none focus:border-accent"
-              />
-              <button
-                type="button"
-                disabled={!dataReady || pending || !user.user_id}
-                onClick={doWipeData}
-                className="tt-press bg-paper-edge text-paper-light px-3 py-1 text-xs hover:opacity-90 transition disabled:opacity-40"
-              >
-                Wipe data
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <p className="text-xs text-ink-soft">
-              Wipe data + delete auth user — type{" "}
-              <span className="mono text-ink">DELETE {user.email}</span>
-            </p>
-            <div className="flex gap-2">
-              <input
-                value={authConfirm}
-                onChange={(e) => setAuthConfirm(e.target.value)}
-                placeholder={`DELETE ${user.email}`}
-                className="flex-1 border border-paper-edge/60 bg-paper-light/60 px-2 py-1 text-xs text-ink outline-none focus:border-accent"
-              />
-              <button
-                type="button"
-                disabled={!authReady || pending || !user.user_id}
-                onClick={doWipeAuth}
-                className="tt-press bg-paper-edge text-paper-light px-3 py-1 text-xs hover:opacity-90 transition disabled:opacity-40"
-              >
-                Wipe + delete
-              </button>
-            </div>
-          </div>
 
           {error && <p className="text-xs text-paper-edge">{error}</p>}
         </div>
