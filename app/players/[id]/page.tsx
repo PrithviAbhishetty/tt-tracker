@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { EloHistoryChart } from "@/components/elo-history-chart";
 import { Hanko } from "@/components/decor/hanko";
 import { CountUp } from "@/components/decor/count-up";
+import { DeleteGuestButton } from "./delete-guest-button";
 
 export const dynamic = "force-dynamic";
 
@@ -17,10 +18,19 @@ export default async function PlayerProfilePage({
 
   const { data: player } = await supabase
     .from("players")
-    .select("id, display_name, user_id, elo_rating, games_played, is_active")
+    .select("id, display_name, user_id, elo_rating, games_played, is_active, created_by")
     .eq("id", id)
     .maybeSingle();
   if (!player) notFound();
+
+  const {
+    data: { user: currentUser },
+  } = await supabase.auth.getUser();
+  const canDelete =
+    !!currentUser &&
+    !player.user_id &&
+    player.created_by === currentUser.id &&
+    player.games_played === 0;
 
   // Determine player rank from active leaderboard
   const { data: ranking } = await supabase
@@ -110,9 +120,12 @@ export default async function PlayerProfilePage({
           {player.display_name}
         </div>
         {!player.user_id && (
-          <p className="text-[11px] uppercase tracking-wider text-ink-soft mt-1">
-            guest
-          </p>
+          <div className="mt-1 flex items-center gap-3">
+            <p className="text-[11px] uppercase tracking-wider text-ink-soft">guest</p>
+            {canDelete && (
+              <DeleteGuestButton playerId={player.id} playerName={player.display_name} />
+            )}
+          </div>
         )}
 
         <div className="grid grid-cols-3 gap-3 mt-6">
