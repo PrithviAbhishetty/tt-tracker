@@ -58,3 +58,31 @@ export async function wipeAllData(): Promise<{ ok: true }> {
   revalidatePath("/admin");
   return { ok: true };
 }
+
+export async function factoryReset(): Promise<{ ok: true; deleted: number }> {
+  await requireAdmin();
+  const service = createServiceClient();
+
+  const { error: wipeErr } = await service.rpc("admin_factory_reset_data");
+  if (wipeErr) throw new Error(wipeErr.message);
+
+  // Delete every auth user, paginating.
+  let page = 1;
+  let deleted = 0;
+  while (true) {
+    const { data, error } = await service.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) throw new Error(error.message);
+    const users = data?.users ?? [];
+    if (users.length === 0) break;
+    for (const u of users) {
+      const { error: dErr } = await service.auth.admin.deleteUser(u.id);
+      if (dErr) throw new Error(`deleting ${u.email}: ${dErr.message}`);
+      deleted++;
+    }
+    if (users.length < 200) break;
+    page++;
+  }
+
+  revalidatePath("/admin");
+  return { ok: true, deleted };
+}

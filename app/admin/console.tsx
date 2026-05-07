@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { wipeAllData, wipeUserAndAuth, wipeUserData } from "./actions";
+import { factoryReset, wipeAllData, wipeUserAndAuth, wipeUserData } from "./actions";
 
 interface AdminUserRow {
   user_id: string | null;
@@ -19,6 +19,7 @@ export function AdminConsole({ users }: { users: AdminUserRow[] }) {
   return (
     <div className="space-y-7">
       <NukeAll />
+      <FactoryReset />
       <section className="space-y-3">
         <p className="slug">［ users ］</p>
         <ul className="paper paper-deckle divide-y divide-paper-edge/40">
@@ -147,6 +148,61 @@ function UserRow({ user }: { user: AdminUserRow }) {
         </div>
       )}
     </li>
+  );
+}
+
+function FactoryReset() {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<number | null>(null);
+  const ready = confirm === "FACTORY RESET";
+
+  function go() {
+    if (!ready) return;
+    setError(null);
+    setDone(null);
+    startTransition(async () => {
+      try {
+        const result = await factoryReset();
+        setConfirm("");
+        setDone(result.deleted);
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed");
+      }
+    });
+  }
+
+  return (
+    <section className="paper paper-deckle px-5 py-5 space-y-3 border-l-4 border-paper-edge">
+      <p className="slug-on-paper">［ factory reset ］</p>
+      <p className="text-sm text-ink-soft">
+        Wipes every match, tournament, group, player row, AND deletes every authenticated user
+        (including yours). The next sign-up starts a fresh app.
+      </p>
+      <div className="flex gap-2">
+        <input
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          placeholder="FACTORY RESET"
+          className="flex-1 border border-paper-edge/60 bg-paper-light/60 px-3 py-2 text-sm text-ink outline-none focus:border-accent transition"
+        />
+        <button
+          type="button"
+          disabled={!ready || pending}
+          onClick={go}
+          className="tt-press bg-paper-edge text-paper-light px-4 py-2 text-sm font-medium hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {pending ? "…" : "Factory reset"}
+        </button>
+      </div>
+      {done !== null && (
+        <p className="text-sm text-ink-soft">Done — deleted {done} auth user(s).</p>
+      )}
+      {error && <p className="text-sm text-paper-edge">{error}</p>}
+    </section>
   );
 }
 
