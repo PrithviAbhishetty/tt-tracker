@@ -4,8 +4,29 @@ import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/admin";
 
+async function assertNoRatedHistory(userId: string): Promise<void> {
+  const service = createServiceClient();
+  const { data: player } = await service
+    .from("players")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!player) return; // no player row, nothing to protect
+  const { count } = await service
+    .from("match_players")
+    .select("match_id, matches!inner(rated)", { count: "exact", head: true })
+    .eq("player_id", player.id)
+    .eq("matches.rated", true);
+  if ((count ?? 0) > 0) {
+    throw new Error(
+      `Cannot wipe: user has ${count} rated game(s). Use factory reset or wipe entire app to clear them.`,
+    );
+  }
+}
+
 export async function wipeUserData(userId: string): Promise<{ ok: true }> {
   await requireAdmin();
+  await assertNoRatedHistory(userId);
   const service = createServiceClient();
   const { error } = await service.rpc("admin_wipe_user_data", { p_user_id: userId });
   if (error) throw new Error(error.message);
@@ -15,6 +36,7 @@ export async function wipeUserData(userId: string): Promise<{ ok: true }> {
 
 export async function wipeUserAndAuth(userId: string): Promise<{ ok: true }> {
   await requireAdmin();
+  await assertNoRatedHistory(userId);
   const service = createServiceClient();
 
   const { data: ownedGuests } = await service

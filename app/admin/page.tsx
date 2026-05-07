@@ -13,6 +13,7 @@ interface AdminUserRow {
   matches_recorded: number;
   tournaments_created: number;
   groups_created: number;
+  rated_games: number;
 }
 
 export default async function AdminPage() {
@@ -48,6 +49,27 @@ export default async function AdminPage() {
   const tournamentCount = countBy(tournaments, "created_by");
   const groupCount = countBy(groups, "created_by");
 
+  // Count rated-match participation per registered user. Once a user has any
+  // rated game, individual data wipes are locked (would silently invalidate
+  // opponents' ELO history). Only factory reset / wipe-all can clear them.
+  const ratedByUserId = new Map<string, number>();
+  const playerIds = (players ?? []).filter((p) => p.user_id).map((p) => p.id);
+  if (playerIds.length > 0) {
+    const { data: ratedRows } = await service
+      .from("match_players")
+      .select("player_id, matches!inner(rated)")
+      .in("player_id", playerIds)
+      .eq("matches.rated", true);
+    const playerToUser = new Map(
+      (players ?? []).filter((p) => p.user_id).map((p) => [p.id, p.user_id as string]),
+    );
+    for (const r of ratedRows ?? []) {
+      const uid = playerToUser.get(r.player_id);
+      if (!uid) continue;
+      ratedByUserId.set(uid, (ratedByUserId.get(uid) ?? 0) + 1);
+    }
+  }
+
   const rows: AdminUserRow[] = users.map((u) => {
     const player = playerByUserId.get(u.id);
     return {
@@ -59,6 +81,7 @@ export default async function AdminPage() {
       matches_recorded: matchCount.get(u.id) ?? 0,
       tournaments_created: tournamentCount.get(u.id) ?? 0,
       groups_created: groupCount.get(u.id) ?? 0,
+      rated_games: ratedByUserId.get(u.id) ?? 0,
     };
   });
   rows.sort((a, b) => a.email.localeCompare(b.email));

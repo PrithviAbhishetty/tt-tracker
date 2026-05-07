@@ -26,11 +26,24 @@ export default async function PlayerProfilePage({
   const {
     data: { user: currentUser },
   } = await supabase.auth.getUser();
+
+  // Guest is deletable only if they've never appeared in any match (rated or
+  // unrated). Once a guest has match history, deleting them would orphan
+  // opponents' history rows.
+  let guestHasAnyMatch = false;
+  if (!player.user_id) {
+    const { count } = await supabase
+      .from("match_players")
+      .select("match_id", { count: "exact", head: true })
+      .eq("player_id", id);
+    guestHasAnyMatch = (count ?? 0) > 0;
+  }
+
   const canDelete =
     !!currentUser &&
     !player.user_id &&
     player.created_by === currentUser.id &&
-    player.games_played === 0;
+    !guestHasAnyMatch;
 
   // Determine player rank from active leaderboard
   const { data: ranking } = await supabase

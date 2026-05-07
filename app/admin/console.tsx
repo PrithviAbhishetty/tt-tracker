@@ -13,6 +13,7 @@ interface AdminUserRow {
   matches_recorded: number;
   tournaments_created: number;
   groups_created: number;
+  rated_games: number;
 }
 
 export function AdminConsole({ users }: { users: AdminUserRow[] }) {
@@ -43,8 +44,9 @@ function UserRow({ user }: { user: AdminUserRow }) {
   const [dataConfirm, setDataConfirm] = useState("");
   const [authConfirm, setAuthConfirm] = useState("");
 
-  const dataReady = dataConfirm.trim().toLowerCase() === user.email.toLowerCase();
-  const authReady = authConfirm.trim() === `DELETE ${user.email}`;
+  const locked = user.rated_games > 0;
+  const dataReady = !locked && dataConfirm.trim().toLowerCase() === user.email.toLowerCase();
+  const authReady = !locked && authConfirm.trim() === `DELETE ${user.email}`;
 
   function doWipeData() {
     if (!dataReady || !user.user_id) return;
@@ -99,6 +101,14 @@ function UserRow({ user }: { user: AdminUserRow }) {
 
       {open && (
         <div className="mt-3 space-y-3 border-t border-paper-edge/40 pt-3">
+          {locked && (
+            <p className="text-xs text-ink-soft border-l-2 border-paper-edge bg-paper-edge/10 px-3 py-2">
+              Locked — this user has {user.rated_games} rated game
+              {user.rated_games === 1 ? "" : "s"}. Individual wipes would invalidate opponents&apos;
+              ELO history. Use <span className="mono">factory reset</span> or{" "}
+              <span className="mono">wipe entire app</span> instead.
+            </p>
+          )}
           <div className="space-y-1">
             <p className="text-xs text-ink-soft">
               Wipe data — type <span className="mono text-ink">{user.email}</span>
