@@ -9,21 +9,23 @@ security definer
 set search_path = public
 as $$
 begin
+  -- Supabase blocks unrestricted DELETE by default, so use a single TRUNCATE
+  -- CASCADE that covers everything user-data-related in one shot.
   truncate
     public.match_elo_snapshots,
     public.match_players,
     public.tournament_matches,
-    public.tournament_participants
+    public.tournament_participants,
+    public.matches,
+    public.tournaments,
+    public.group_members,
+    public.groups
   restart identity cascade;
-
-  delete from public.matches;
-  delete from public.tournaments;
-  delete from public.group_members;
-  delete from public.groups;
 
   update public.players
      set elo_rating = 1200,
-         games_played = 0;
+         games_played = 0
+   where true;
 end;
 $$;
 
