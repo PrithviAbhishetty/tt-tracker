@@ -28,6 +28,7 @@ end;
 $$;
 
 revoke all on function public.admin_wipe_all() from public, anon, authenticated;
+grant execute on function public.admin_wipe_all() to service_role;
 
 create or replace function public.admin_wipe_user_data(p_user_id uuid)
 returns void
@@ -53,3 +54,4 @@ end;
 $$;
 
 revoke all on function public.admin_wipe_user_data(uuid) from public, anon, authenticated;
+grant execute on function public.admin_wipe_user_data(uuid) to service_role;
