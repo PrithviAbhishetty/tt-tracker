@@ -32,6 +32,7 @@ const DRIFT_FLOOR_FRICTION = 0.985;
 const DRIFT_WALL_REFLECT = 0.55;
 const BALL_SIZE = 32;
 const RADIUS = BALL_SIZE / 2;
+const TOP_NAV_GUARD = 64; // keep the ball out of the top-nav hit area
 
 type Sample = { x: number; y: number; t: number };
 
@@ -169,9 +170,9 @@ export function BouncingBall() {
         x = W - BALL_SIZE;
         vx = -vx * RESTITUTION;
       }
-      if (y < 0) {
-        y = 0;
-        vy = -vy * RESTITUTION;
+      if (y < TOP_NAV_GUARD) {
+        y = TOP_NAV_GUARD;
+        vy = Math.abs(vy) * RESTITUTION;
       } else if (y + BALL_SIZE > H) {
         y = H - BALL_SIZE;
         vy = -vy * RESTITUTION;
@@ -313,7 +314,7 @@ export function BouncingBall() {
         bottom: 0,
         height: "35vh",
         overflow: "visible",
-        zIndex: 30,
+        zIndex: 20,
       }}
     >
       <div

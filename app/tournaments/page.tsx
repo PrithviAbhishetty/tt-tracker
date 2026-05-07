@@ -30,7 +30,22 @@ export default async function TournamentsPage() {
       </div>
 
       {!tournaments || tournaments.length === 0 ? (
-        <p className="text-sm text-ink-on-paper/70">No tournaments yet.</p>
+        <div className="paper paper-deckle p-10 text-center space-y-4 tt-pop">
+          <div className="flex items-center justify-center gap-3 text-ink-soft text-[11px] uppercase tracking-[0.3em]">
+            <span className="h-px w-6 bg-paper-edge/60" />
+            no tournaments yet
+            <span className="h-px w-6 bg-paper-edge/60" />
+          </div>
+          <p className="text-sm text-ink-soft">
+            Set up a round-robin or single-elim bracket. Players already in the system are ready to draft.
+          </p>
+          <Link
+            href="/tournaments/new"
+            className="tt-press inline-block bg-accent text-paper-light px-5 py-2.5 text-sm font-medium hover:bg-accent-deep transition mt-1"
+          >
+            + New tournament
+          </Link>
+        </div>
       ) : (
         <ul className="space-y-3">
           {tournaments.map((t, i) => (

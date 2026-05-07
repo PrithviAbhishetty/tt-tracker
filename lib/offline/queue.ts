@@ -1,25 +1,11 @@
-import { openDB, type IDBPDatabase } from "idb";
 import type { MatchRecord } from "@/lib/types";
-
-const DB_NAME = "tt-tracker";
-const DB_VERSION = 1;
-const STORE = "pending_matches";
+import { getDb, STORE_PENDING_MATCHES } from "./db";
 
 interface QueueRow {
   client_uuid: string;
   payload: MatchRecord;
   queued_at: string;
   attempts: number;
-}
-
-async function getDb(): Promise<IDBPDatabase> {
-  return openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains(STORE)) {
-        db.createObjectStore(STORE, { keyPath: "client_uuid" });
-      }
-    },
-  });
 }
 
 export async function enqueue(match: MatchRecord): Promise<void> {
@@ -30,28 +16,39 @@ export async function enqueue(match: MatchRecord): Promise<void> {
     queued_at: new Date().toISOString(),
     attempts: 0,
   };
-  await db.put(STORE, row);
+  await db.put(STORE_PENDING_MATCHES, row);
 }
 
 export async function dequeue(client_uuid: string): Promise<void> {
   const db = await getDb();
-  await db.delete(STORE, client_uuid);
+  await db.delete(STORE_PENDING_MATCHES, client_uuid);
 }
 
 export async function bumpAttempts(client_uuid: string): Promise<void> {
   const db = await getDb();
-  const row = (await db.get(STORE, client_uuid)) as QueueRow | undefined;
+  const row = (await db.get(STORE_PENDING_MATCHES, client_uuid)) as QueueRow | undefined;
   if (!row) return;
   row.attempts += 1;
-  await db.put(STORE, row);
+  await db.put(STORE_PENDING_MATCHES, row);
 }
 
 export async function listQueued(): Promise<QueueRow[]> {
   const db = await getDb();
-  return (await db.getAll(STORE)) as QueueRow[];
+  return (await db.getAll(STORE_PENDING_MATCHES)) as QueueRow[];
 }
 
 export async function pendingCount(): Promise<number> {
   const db = await getDb();
-  return db.count(STORE);
+  return db.count(STORE_PENDING_MATCHES);
+}
+
+export async function updateQueuedPayload(
+  client_uuid: string,
+  payload: MatchRecord,
+): Promise<void> {
+  const db = await getDb();
+  const row = (await db.get(STORE_PENDING_MATCHES, client_uuid)) as QueueRow | undefined;
+  if (!row) return;
+  row.payload = payload;
+  await db.put(STORE_PENDING_MATCHES, row);
 }

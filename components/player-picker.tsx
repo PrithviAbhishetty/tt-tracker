@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PlayerRow } from "@/lib/types";
-import { createClient } from "@/lib/supabase/client";
+import { createPlayer, fetchPlayers } from "@/lib/offline/players-cache";
 
 interface Props {
   selected: string[];
@@ -18,21 +18,15 @@ export function PlayerPicker({ selected, onChange, max, exclude = [], label }: P
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const supabase = useMemo(() => createClient(), []);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function load() {
-    const { data } = await supabase
-      .from("players")
-      .select("id, display_name, user_id, elo_rating, games_played, is_active")
-      .eq("is_active", true)
-      .order("display_name");
-    if (data) setPlayers(data as PlayerRow[]);
+    const data = await fetchPlayers();
+    setPlayers(data);
   }
 
   const filtered = useMemo(() => {
@@ -57,20 +51,17 @@ export function PlayerPicker({ selected, onChange, max, exclude = [], label }: P
     setError(null);
     const name = newName.trim();
     if (!name) return;
-    const res = await fetch("/api/players", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ display_name: name }),
-    });
-    if (!res.ok) {
-      setError((await res.json()).error || "Failed to add");
-      return;
+    try {
+      const { player } = await createPlayer(name);
+      setPlayers((prev) =>
+        [...prev, player].sort((a, b) => a.display_name.localeCompare(b.display_name)),
+      );
+      setNewName("");
+      setAdding(false);
+      if (selected.length < max) onChange([...selected, player.id]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add");
     }
-    const player = (await res.json()) as PlayerRow;
-    setPlayers((prev) => [...prev, player].sort((a, b) => a.display_name.localeCompare(b.display_name)));
-    setNewName("");
-    setAdding(false);
-    if (selected.length < max) onChange([...selected, player.id]);
   }
 
   return (

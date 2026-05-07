@@ -20,11 +20,25 @@ export function SignInForm({ next }: { next?: string }) {
   function signInWithGoogle() {
     setError(null);
     startTransition(async () => {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo },
-      });
-      if (error) setError(error.message);
+      try {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo, skipBrowserRedirect: true },
+        });
+        if (error) {
+          setError(error.message);
+          return;
+        }
+        if (data?.url) {
+          window.location.assign(data.url);
+        } else {
+          setError(
+            "Google sign-in returned no redirect URL. Check that Google is enabled in Supabase Auth and that the redirect URL allow-list includes this origin.",
+          );
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Sign-in failed");
+      }
     });
   }
 

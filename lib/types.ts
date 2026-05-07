@@ -7,6 +7,21 @@ export interface PlayerRow {
   is_active: boolean;
 }
 
+export interface GroupRow {
+  id: string;
+  name: string;
+  slug: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface GroupMemberRow {
+  group_id: string;
+  player_id: string;
+  role: "owner" | "member";
+  joined_at: string;
+}
+
 export interface MatchRecord {
   client_uuid: string;
   match_type: "singles" | "doubles";

@@ -97,7 +97,9 @@ async function advanceTournamentWinner(
   // Link the match to the tournament_match
   const { data: tm } = await service
     .from("tournament_matches")
-    .select("id, winner_advances_to, winner_advances_to_side, side1_player_ids, side2_player_ids")
+    .select(
+      "id, tournament_id, winner_advances_to, winner_advances_to_side, side1_player_ids, side2_player_ids",
+    )
     .eq("id", tournamentMatchId)
     .maybeSingle();
   if (!tm) return;
@@ -111,5 +113,18 @@ async function advanceTournamentWinner(
       .from("tournament_matches")
       .update({ [col]: winnerIds })
       .eq("id", tm.winner_advances_to);
+  }
+
+  const { count: remaining } = await service
+    .from("tournament_matches")
+    .select("id", { count: "exact", head: true })
+    .eq("tournament_id", tm.tournament_id)
+    .is("match_id", null);
+
+  if (remaining === 0) {
+    await service
+      .from("tournaments")
+      .update({ status: "completed", completed_at: new Date().toISOString() })
+      .eq("id", tm.tournament_id);
   }
 }

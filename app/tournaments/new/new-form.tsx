@@ -4,12 +4,20 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PlayerPicker } from "@/components/player-picker";
 
-export function NewTournamentForm() {
+interface NewTournamentFormProps {
+  groupId?: string | null;
+  presetParticipants?: string[];
+}
+
+export function NewTournamentForm({
+  groupId = null,
+  presetParticipants = [],
+}: NewTournamentFormProps = {}) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [format, setFormat] = useState<"round_robin" | "single_elim">("round_robin");
   const [matchType, setMatchType] = useState<"singles" | "doubles">("singles");
-  const [participants, setParticipants] = useState<string[]>([]);
+  const [participants, setParticipants] = useState<string[]>(presetParticipants);
   const [teams, setTeams] = useState<{ a: string; b: string }[]>([]); // doubles: pre-formed teams
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +37,7 @@ export function NewTournamentForm() {
         participants: isDoubles
           ? teams.map((t, i) => ({ team_label: `T${i + 1}`, player_ids: [t.a, t.b] }))
           : participants.map((id) => ({ team_label: null, player_ids: [id] })),
+        group_id: groupId,
       };
       const res = await fetch("/api/tournaments", {
         method: "POST",

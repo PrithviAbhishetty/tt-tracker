@@ -13,6 +13,7 @@ interface CreateInput {
   format: "round_robin" | "single_elim";
   match_type: "singles" | "doubles";
   participants: ParticipantInput[];
+  group_id?: string | null;
 }
 
 function validate(body: unknown): CreateInput | null {
@@ -31,6 +32,7 @@ function validate(body: unknown): CreateInput | null {
   // No duplicate players across teams
   const allIds = b.participants.flatMap((p) => p.player_ids);
   if (new Set(allIds).size !== allIds.length) return null;
+  if (b.group_id != null && typeof b.group_id !== "string") return null;
   return b as CreateInput;
 }
 
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
       status: "in_progress",
       created_by: user.id,
       started_at: new Date().toISOString(),
+      group_id: input.group_id ?? null,
     })
     .select("id")
     .single();

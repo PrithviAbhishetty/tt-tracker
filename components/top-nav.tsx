@@ -20,20 +20,34 @@ export async function TopNav() {
         <nav className="flex items-center gap-3 text-sm text-ink-on-paper">
           {user ? (
             <>
-              <NavLink href="/record">Record</NavLink>
-              <NavLink href="/players">Players</NavLink>
-              <NavLink href="/tournaments">Tourneys</NavLink>
-              <InstallPrompt />
-              <SignOutButton />
+              <div className="hidden sm:flex items-center gap-3">
+                <NavLink href="/record">Record</NavLink>
+                <NavLink href="/players">Players</NavLink>
+                <NavLink href="/groups">Groups</NavLink>
+                <NavLink href="/tournaments">Tourneys</NavLink>
+                <NavLink href="/account">Account</NavLink>
+                <InstallPrompt />
+                <SignOutButton />
+              </div>
+              <details className="sm:hidden relative">
+                <summary className="list-none cursor-pointer select-none px-2 py-1 text-ink-on-paper [&::-webkit-details-marker]:hidden">
+                  <span className="inline-block w-5 h-[2px] bg-current relative before:content-[''] before:absolute before:inset-0 before:-translate-y-[6px] before:bg-current after:content-[''] after:absolute after:inset-0 after:translate-y-[6px] after:bg-current" />
+                  <span className="sr-only">Menu</span>
+                </summary>
+                <div className="absolute right-0 mt-2 paper paper-deckle py-2 px-3 min-w-[10rem] z-40 flex flex-col gap-2.5">
+                  <NavLink href="/record">Record</NavLink>
+                  <NavLink href="/players">Players</NavLink>
+                  <NavLink href="/groups">Groups</NavLink>
+                  <NavLink href="/tournaments">Tourneys</NavLink>
+                  <NavLink href="/account">Account</NavLink>
+                  <div className="border-t border-paper-edge/40 pt-2 mt-1 flex items-center gap-3">
+                    <InstallPrompt />
+                    <SignOutButton />
+                  </div>
+                </div>
+              </details>
             </>
-          ) : (
-            <Link
-              href="/sign-in"
-              className="tt-press px-3 py-1.5 bg-accent text-paper-light text-sm font-medium hover:bg-accent-deep transition"
-            >
-              Sign in
-            </Link>
-          )}
+          ) : null}
         </nav>
       </div>
     </header>
