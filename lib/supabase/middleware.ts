@@ -38,6 +38,8 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/_next") ||
     path === "/manifest.webmanifest" ||
     path === "/sw.js" ||
+    path.startsWith("/swe-worker-") ||
+    path.startsWith("/workbox-") ||
     path.startsWith("/icons/") ||
     path === "/offline";
 
