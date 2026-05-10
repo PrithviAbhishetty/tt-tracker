@@ -15,7 +15,7 @@ import { useEffect, useRef } from "react";
  *             floor with a gently random-walking horizontal target
  *             velocity, until grabbed again
  *
- * Touch / reduced-motion: idle only (ball runs CSS arc, not grabbable).
+ * Pointer Events cover both mouse and touch — touch users can grab and fling.
  * Static under prefers-reduced-motion.
  */
 
@@ -50,12 +50,6 @@ export function BouncingBall() {
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
     ) {
       ball.style.animation = "none";
-      return;
-    }
-
-    const isFinePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-    if (!isFinePointer) {
-      // Touch: ambient arc only, no interaction
       return;
     }
 
