@@ -49,23 +49,25 @@ export function MobileMenu({ children }: { children: React.ReactNode }) {
           <div
             ref={panelRef}
             role="menu"
-            className="absolute right-0 mt-2 paper paper-deckle py-2 px-3 min-w-[12rem] z-40 flex flex-col gap-2.5 text-ink"
+            className="absolute right-0 top-full mt-2 z-40 min-w-[12rem]"
           >
-            <button
-              type="button"
-              aria-label="Close menu"
-              onClick={() => setOpen(false)}
-              className="self-end -mr-1 -mt-0.5 px-2 py-0.5 text-ink/70 hover:text-ink text-base leading-none cursor-pointer"
-            >
-              ✕
-            </button>
-            {LINKS.map(({ href, label }) => (
-              <MobileNavLink key={href} href={href} onNavigate={() => setOpen(false)}>
-                {label}
-              </MobileNavLink>
-            ))}
-            <div className="border-t border-paper-edge/40 pt-2 mt-1 flex items-center gap-3">
-              {children}
+            <div className="paper paper-deckle py-2 px-3 flex flex-col gap-2.5 text-ink">
+              <button
+                type="button"
+                aria-label="Close menu"
+                onClick={() => setOpen(false)}
+                className="self-end -mr-1 px-2 py-0.5 text-ink/70 hover:text-ink text-base leading-none cursor-pointer"
+              >
+                ✕
+              </button>
+              {LINKS.map(({ href, label }) => (
+                <MobileNavLink key={href} href={href} onNavigate={() => setOpen(false)}>
+                  {label}
+                </MobileNavLink>
+              ))}
+              <div className="border-t border-paper-edge/40 pt-2 mt-1 flex items-center gap-3 text-ink">
+                {children}
+              </div>
             </div>
           </div>
         </>

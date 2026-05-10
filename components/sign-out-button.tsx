@@ -22,7 +22,7 @@ export function SignOutButton() {
       type="button"
       onClick={signOut}
       disabled={pending}
-      className="text-ink-on-paper/60 hover:text-ink-on-paper transition disabled:opacity-50"
+      className="opacity-60 hover:opacity-100 transition disabled:opacity-50"
     >
       Sign out
     </button>
