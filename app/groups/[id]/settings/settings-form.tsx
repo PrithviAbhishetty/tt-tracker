@@ -117,13 +117,13 @@ export function GroupSettings({ groupId, initialName, members }: Props) {
     <div className="space-y-6">
       <section className="paper paper-deckle px-5 py-5 space-y-3">
         <p className="slug-on-paper">［ name ］</p>
-        <form onSubmit={rename} className="flex gap-2">
+        <form onSubmit={rename} className="flex flex-col gap-2 sm:flex-row">
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={80}
-            className="flex-1 border border-paper-edge/60 bg-paper-light/60 px-3 py-2 text-sm text-ink focus:border-accent focus:bg-paper-light outline-none transition"
+            className="min-w-0 flex-1 border border-paper-edge/60 bg-paper-light/60 px-3 py-2 text-sm text-ink focus:border-accent focus:bg-paper-light outline-none transition"
           />
           <button
             type="submit"

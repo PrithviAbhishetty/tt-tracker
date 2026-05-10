@@ -8,6 +8,10 @@ import { useEffect, useRef } from "react";
  *   - Ambient: 1 leaf every 3-5s (desktop) / 6-9s (mobile)
  *   - Burst: listens for window "tt-tree-hit"; spawns 10-14 leaves
  *
+ * Spawn position is read from [data-tt-tree-canopy] at the moment of
+ * spawn so leaves originate from wherever the tree actually is in the
+ * viewport. Falls back to top-right if the canopy isn't on screen yet.
+ *
  * Each leaf self-removes via animationend. Disabled under
  * prefers-reduced-motion.
  */
@@ -28,10 +32,21 @@ function spawnLeaf(host: HTMLElement, opts: { burst?: boolean } = {}) {
     ? 5 + Math.random() * 2.5
     : 22 + Math.random() * 12;
 
+  const canopy = document
+    .querySelector<SVGRectElement>("[data-tt-tree-canopy]")
+    ?.getBoundingClientRect();
+  let position: string;
+  if (canopy && canopy.width > 0 && canopy.height > 0) {
+    const x = canopy.left + Math.random() * canopy.width;
+    const y = canopy.top + Math.random() * canopy.height;
+    position = `top: ${y}px; left: ${x}px;`;
+  } else {
+    position = `top: ${4 + Math.random() * 14}vh; right: ${Math.random() * 14}vw;`;
+  }
+
   leaf.style.cssText = `
     position: fixed;
-    top: ${4 + Math.random() * 14}vh;
-    right: ${Math.random() * 14}vw;
+    ${position}
     width: ${size}px;
     height: ${size}px;
     pointer-events: none;

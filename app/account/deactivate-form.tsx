@@ -28,13 +28,13 @@ export function DeactivateForm({ email }: { email: string }) {
       <label className="block text-xs text-ink-soft">
         Type your email to confirm: <span className="mono text-ink">{email}</span>
       </label>
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           type="text"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           placeholder={email}
-          className="flex-1 border border-paper-edge/60 bg-paper-light/60 px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-accent focus:bg-paper-light outline-none transition"
+          className="min-w-0 flex-1 border border-paper-edge/60 bg-paper-light/60 px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-accent focus:bg-paper-light outline-none transition"
         />
         <button
           type="submit"
